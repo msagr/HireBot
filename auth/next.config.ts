@@ -1,6 +1,8 @@
-/** @type {import('next').NextConfig} */
-const nextConfig: import('next').NextConfig = {
-  assetPrefix: "/auth",
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  basePath: '/auth',
+  restrictMode: true,
 };
 
 export default nextConfig;
