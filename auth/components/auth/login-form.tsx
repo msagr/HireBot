@@ -5,6 +5,7 @@ import * as z from "zod";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSearchParams } from "next/navigation";
 
 import {
     Form,
@@ -46,7 +47,7 @@ export const LoginForm = () => {
             login(values)
                 .then((data) => {
                     setError(data?.error);
-                    setSuccess(data?.success);
+                    // setSuccess(data?.success);
                 });
         });
     };

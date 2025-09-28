@@ -1,5 +1,5 @@
 
-const BASE_PATH = "/auth";
+// const BASE_PATH = "/auth";
 
 /**
  * An array of routes that are accessible to the public
@@ -8,7 +8,7 @@ const BASE_PATH = "/auth";
  */
 
 export const publicRoutes = [
-    `${BASE_PATH}/`
+    `/`
 ];
 
 /**
@@ -17,8 +17,9 @@ export const publicRoutes = [
  * @type {string[]}
  */
 export const authRoutes: string[] = [
-    `${BASE_PATH}/login`,
-    `${BASE_PATH}/register`,
+    `/auth/login`,
+    `/auth/register`,
+    `/auth/error`,
 ];
 
 /**
@@ -26,10 +27,10 @@ export const authRoutes: string[] = [
  * Routes that start with this prefix are used for API authentication purposes
  * @type {string}
  */
-export const apiAuthPrefix = `${BASE_PATH}/api/auth`;
+export const apiAuthPrefix = `/api/auth`;
 
 /**
  * The default redirect path after logging in
  * @type {string}
  */
-export const DEFAULT_LOGIN_REDIRECT = `${BASE_PATH}/settings`;
+export const DEFAULT_LOGIN_REDIRECT = `/settings`;
