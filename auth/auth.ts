@@ -25,13 +25,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             return true;
         }
         
-        // For credentials, check if user exists and email is verified
-        if (user.id) {
-            const existingUser = await getUserById(user.id);
-            return !!(existingUser?.emailVerified);
-        }
+        const existingUser = (user.id) ? await getUserById(user.id) : null;
         
-        return false;
+        // Prevent signin without email verification
+        if (!existingUser?.emailVerified) return false;
+
+        // TODO: 2FA check
+        return true;
     },
     async session({ token, session }) {
         if (token.sub && session.user) {

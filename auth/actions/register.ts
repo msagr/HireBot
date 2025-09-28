@@ -6,6 +6,8 @@ import { RegisterSchema } from "../schemas";
 import bcrypt  from "bcryptjs";
 
 import { getUserByEmail } from "@/data/user";
+import { generateVerificationToken } from "@/lib/tokens";
+import { sendVerificationEmail } from "@/lib/mail";
 
 export const register = async (values: z.infer<typeof RegisterSchema>) => {
     try {
@@ -30,8 +32,9 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
             }
         });
 
-        // TODO: send verification token email
-        return { success: "User created!", error: undefined };
+        const verificationToken = await generateVerificationToken(email);
+        await sendVerificationEmail(verificationToken.email, verificationToken.token);
+        return { success: "Confirmation email sent!", error: undefined };
         
     } catch (error) {
         console.error("Login error:", error);
