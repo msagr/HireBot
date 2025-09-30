@@ -5,7 +5,10 @@ import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, Maximize2, Minimize2, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Loader2, Maximize2, Minimize2, ArrowLeft, ArrowRight, Check, Video, VideoOff, Mic, CheckCircle } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
@@ -34,9 +37,25 @@ const getTimeForDifficulty = (difficulty: string) => {
   }
 };
 
+type FormData = {
+  name: string;
+  email: string;
+  phone: string;
+  resume: File | null;
+};
+
+type Step = 'form' | 'proctored' | 'test';
+
 const InterviewPage = ({ params }: { params: { interview_id: string } }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [currentStep, setCurrentStep] = useState<Step>('form');
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    email: '',
+    phone: '',
+    resume: null,
+  });
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -44,9 +63,12 @@ const InterviewPage = ({ params }: { params: { interview_id: string } }) => {
   const [testId, setTestId] = useState<string | null>(null);
   const [code, setCode] = useState<string>("");
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [timeLeft, setTimeLeft] = useState<number>(0); // timer state
+  const [timeLeft, setTimeLeft] = useState<number>(0);
   const editorRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [micReady, setMicReady] = useState(false);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -158,6 +180,22 @@ const InterviewPage = ({ params }: { params: { interview_id: string } }) => {
     router.push("/thank-you");
   };
 
+  // Handle form submission
+  const handleFormSubmit = (data: FormData) => {
+    setFormData(data);
+    setCurrentStep('proctored');
+  };
+
+  // Handle proctored setup completion
+  const handleProctoredComplete = () => {
+    setCurrentStep('test');
+  };
+
+  // Handle test submission
+  const handleTestComplete = () => {
+    router.push('/thank-you');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -177,6 +215,152 @@ const InterviewPage = ({ params }: { params: { interview_id: string } }) => {
     );
   }
 
+  // Render form step
+  if (currentStep === 'form') {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-center">Candidate Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleFormSubmit(formData);
+            }} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Full Name</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  required
+                  placeholder="John Doe"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  required
+                  placeholder="john@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone Number</Label>
+                <Input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  required
+                  placeholder="+1234567890"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Resume (PDF)</Label>
+                <Input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => setFormData({...formData, resume: e.target.files?.[0] || null})}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Continue to Proctored Setup
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Render proctored setup step
+  if (currentStep === 'proctored') {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">Proctored Setup</CardTitle>
+            <CardDescription>
+              Please allow camera and microphone access to continue with the interview.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-gray-100 rounded-lg overflow-hidden aspect-video relative">
+              <video
+                ref={(ref) => {
+                  if (ref && streamRef.current) {
+                    ref.srcObject = streamRef.current;
+                  }
+                }}
+                className="w-full h-full object-cover"
+                playsInline
+                muted
+                autoPlay
+              />
+              {!cameraReady && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+                  <div className="text-center p-4">
+                    <VideoOff className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+                    <p className="text-gray-600">Camera feed will appear here</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center">
+                {cameraReady ? (
+                  <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                ) : (
+                  <Video className="h-5 w-5 text-gray-400 mr-2" />
+                )}
+                <span>Camera {cameraReady ? 'ready' : 'not detected'}</span>
+              </div>
+              <div className="flex items-center">
+                {micReady ? (
+                  <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                ) : (
+                  <Mic className="h-5 w-5 text-gray-400 mr-2" />
+                )}
+                <span>Microphone {micReady ? 'ready' : 'not detected'}</span>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-end">
+            <Button 
+              onClick={async () => {
+                try {
+                  const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true,
+                  });
+                  streamRef.current = stream;
+                  setCameraReady(true);
+                  setMicReady(true);
+                } catch (err) {
+                  console.error('Error accessing media devices:', err);
+                  setError('Could not access camera or microphone. Please check your permissions.');
+                }
+              }}
+              className="mr-2"
+            >
+              Allow Access
+            </Button>
+            <Button 
+              onClick={handleProctoredComplete}
+              disabled={!cameraReady || !micReady}
+            >
+              Start Test
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  // Check if we have questions before rendering test
   if (questions.length === 0) {
     return (
       <div className="container mx-auto p-4">
