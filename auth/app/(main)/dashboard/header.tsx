@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,6 +19,7 @@ import { NavItems } from '@/config';
 import { Menu } from 'lucide-react';
 
 export default function Header() {
+  const { data: session } = useSession();
   const navItems = NavItems();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -30,7 +31,7 @@ export default function Header() {
         prefetch={false}
       >
         <span className="w-8 h-8 border bg-accent rounded-full" />
-        <span>Acme Inc</span>
+        <span>HireBot</span>
       </Link>
 
       <div className="ml-4 flex items-center gap-3">
@@ -43,11 +44,15 @@ export default function Header() {
             >
               <Avatar>
                 <AvatarImage
-                  src="https://github.com/shadcn.png"
-                  alt="@shadcn"
+                  src={session?.user?.image || undefined}
+                  alt={session?.user?.name || 'User'}
                 />
-                <AvatarFallback>CN</AvatarFallback>
-              </Avatar>
+                <AvatarFallback>
+                  {session?.user?.name
+                    ? session.user.name.split(' ').map(n => n[0]).join('').toUpperCase()
+                    : 'U'
+                  }
+                </AvatarFallback>              </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

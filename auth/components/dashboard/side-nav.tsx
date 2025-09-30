@@ -56,26 +56,28 @@ export default function SideNav() {
           <div className="mt-4 relative pb-2">
             {/* Create Interview Button */}
             <div className="mt-2 mb-6 px-2">
-              <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-9">
-                {isSidebarExpanded ? (
-                  <span className="flex items-center gap-2 px-2">
-                    <Plus size={16} className="flex-shrink-0" />
-                    <span className="text-sm font-medium">Create Interview</span>
-                  </span>
-                ) : (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center justify-center w-full h-full">
-                          <Plus size={18} />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="px-3 py-1.5 text-xs">
-                        Create Interview
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
+              <Button asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-9">
+                <Link href="/dashboard/create-interview">
+                  {isSidebarExpanded ? (
+                    <span className="flex items-center gap-2 px-2">
+                      <Plus size={16} className="flex-shrink-0" />
+                      <span className="text-sm font-medium">Create Test</span>
+                    </span>
+                  ) : (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center justify-center w-full h-full">
+                            <Plus size={18} />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="px-3 py-1.5 text-xs">
+                          Create Test
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </Link>
               </Button>
             </div>
             

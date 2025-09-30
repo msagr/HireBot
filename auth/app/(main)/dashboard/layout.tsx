@@ -1,11 +1,10 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 
 import ContextProvider from '@/components/dashboard/context-provider';
-
 import SideNav from '@/components/dashboard/side-nav';
-
 import Header from './header';
+
+import { Toaster } from "sonner"; 
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -18,18 +17,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-        <ContextProvider>
-          <Header />
-          <div className="flex">
-            <SideNav />
-            <div className="w-full overflow-x-auto">
-              <div className="sm:h-[calc(99vh-60px)] overflow-auto ">
-                <div className="w-full flex justify-center mx-auto   overflow-auto h-[calc(100vh - 120px)] overflow-y-auto relative">
-                  <div className="w-full md:max-w-6xl">{children}</div>
-                </div>
-              </div>
+    <ContextProvider>
+      <Header />
+      <div className="flex">
+        <SideNav />
+        <div className="w-full overflow-x-auto">
+          <div className="sm:h-[calc(99vh-60px)] overflow-auto ">
+            <div className="w-full flex justify-center mx-auto overflow-auto h-[calc(100vh-120px)] overflow-y-auto relative">
+              <div className="w-full md:max-w-6xl">{children}</div>
             </div>
           </div>
-        </ContextProvider>
+        </div>
+      </div>
+
+      <Toaster 
+        position="top-center"   // place at top center
+        richColors              // enable rich variants
+        closeButton             // adds cross/dismiss button
+      />
+    </ContextProvider>
   );
 }
