@@ -1,7 +1,0 @@
-{
-    "private": true,
-    "dependencies": {
-        "@types/react-syntax-highlighter": "^15.5.13",
-        "react-syntax-highlighter": "^15.6.6"
-    }
-}
