@@ -1,11 +1,22 @@
-import NextAuth, {DefaultSession} from "next-auth"
+import NextAuth, { DefaultSession } from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter";
 
 import { getUserById } from "./data/user";
 import { db } from "@/lib/db";
-import authConfig from "@/auth.config";
+import authConfig from "@/auth.config"
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string
+      role?: string
+      image?: string | null
+    } & DefaultSession["user"]
+  }
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   pages: {
     signIn: "/auth/login",
     error: "/auth/error",
@@ -27,7 +38,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         
         const existingUser = (user.id) ? await getUserById(user.id) : null;
         
-        // Prevent signin without email verification
         if (!existingUser?.emailVerified) return false;
 
         // TODO: 2FA check
@@ -38,7 +48,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             session.user.id = token.sub;
         }
         if (token.role && session.user) {
-            session.user.role = token.role;
+            session.user.role = token.role as string;
+        }
+        if (session.user) {
+            session.user.name = token.name || null;
+            session.user.email = token.email as string;
+            session.user.image = token.picture as string | undefined;
         }
         return session;
     },
@@ -47,12 +62,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const existingUser = await getUserById(token.sub);
 
         if (!existingUser) return token;
+        
         token.role = existingUser.role;
+        token.name = existingUser.name;
+        token.email = existingUser.email;
+        token.picture = existingUser.image || undefined;
 
         return token;
     }
   },
   adapter: PrismaAdapter(db),
   session: { strategy: "jwt" },
-  ...authConfig,
 });

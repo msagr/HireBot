@@ -23,7 +23,7 @@ export default auth((req) => {
   
     // If logged in, block access to login/register
     if (isAuthRoute && isLoggedIn) {
-      if (nextUrl.pathname === DEFAULT_LOGIN_REDIRECT || nextUrl.pathname === "/auth/register" || nextUrl.pathname === "/auth/error") {
+      if (nextUrl.pathname === DEFAULT_LOGIN_REDIRECT || nextUrl.pathname === "/auth/register" || nextUrl.pathname === "/auth/error" || nextUrl.pathname === "/auth/new-verification" || nextUrl.pathname === "/dashboard") {
         return null; // prevent self-redirect loop
       }
       return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, req.url));
@@ -31,7 +31,7 @@ export default auth((req) => {
   
     // If not logged in, block access to private routes
     if (!isLoggedIn && !isPublicRoute) {
-      if (nextUrl.pathname === "/auth/login" || nextUrl.pathname === "/auth/register" || nextUrl.pathname === "/auth/error") {
+      if (nextUrl.pathname === "/auth/login" || nextUrl.pathname === "/auth/register" || nextUrl.pathname === "/auth/error" || nextUrl.pathname === "/auth/new-verification" || nextUrl.pathname === "/dashboard") {
         return null; // prevent loop
       }
       return Response.redirect(new URL("/auth/login", req.url));
