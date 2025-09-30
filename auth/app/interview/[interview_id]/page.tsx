@@ -29,7 +29,34 @@ const InterviewPage = ({ params }: { params: { interview_id: string } }) => {
   const [error, setError] = useState<string | null>(null);
   const [testId, setTestId] = useState<string | null>(null);
   const [code, setCode] = useState<string>('');
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const editorRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   function handleEditorDidMount(editor: any) {
     editorRef.current = editor;
@@ -164,7 +191,10 @@ const InterviewPage = ({ params }: { params: { interview_id: string } }) => {
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+    <div 
+      ref={containerRef}
+      className={`${isFullscreen ? 'fixed inset-0 bg-white z-50 flex items-center justify-center' : 'min-h-screen bg-gradient-to-br from-gray-50 to-gray-100'} p-4 md:p-6`}
+    >
       <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {/* Header */}
@@ -191,10 +221,17 @@ const InterviewPage = ({ params }: { params: { interview_id: string } }) => {
                   </svg>
                   45:00
                 </button>
-                <button className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-gray-700">
+                <button 
+                  onClick={toggleFullscreen}
+                  className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-gray-700"
+                  title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    {isFullscreen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 16L4 20h4v4l2-2m1-16h2m8 0h2m-8 0a4 4 0 00-4 4v1a1 1 0 01-1 1H4m16 0h-3a1 1 0 01-1-1v-1a4 4 0 00-4-4m0 16h-2m-8 0H4m8 0a4 4 0 004-4v-1a1 1 0 011-1h3a1 1 0 011 1v1a4 4 0 01-4 4z" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    )}
                   </svg>
                 </button>
               </div>
@@ -203,9 +240,9 @@ const InterviewPage = ({ params }: { params: { interview_id: string } }) => {
       
           
           {/* Main Content */}
-          <div className="flex flex-col lg:flex-row h-[calc(100vh-180px)]">
+          <div className={`flex flex-col lg:flex-row ${isFullscreen ? 'w-full max-w-7xl max-h-[90vh] shadow-xl' : 'w-full'}`}>
             {/* Question Panel */}
-            <div className="w-full lg:w-1/2 p-6 overflow-y-auto border-r border-gray-100">
+            <div className="w-full lg:w-1/2 p-6 overflow-y-auto border-r border-gray-100" style={{ height: isFullscreen ? 'calc(90vh - 4rem)' : 'auto' }}>
               <div className="prose max-w-none">
                 <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r">
                   <h3 className="text-gray-800 font-medium">Problem Statement</h3>
@@ -245,74 +282,77 @@ Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].`}</pre>
             </div>
             
             {/* Editor Panel */}
-            <div className="w-full lg:w-1/2 flex flex-col border-t lg:border-t-0 border-gray-100">
-              <div className="p-4 border-b border-gray-100 bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-700">Your Solution</h3>
-                  <div className="flex items-center space-x-2">
-                    <button className="text-xs px-2.5 py-1 rounded-md bg-white border border-gray-200 text-gray-600 hover:bg-gray-50">
-                      Run Code (Ctrl+Enter)
-                    </button>
-                    <button className="text-gray-500 hover:text-gray-700">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex-1 relative">
-                <div className="absolute inset-0">
-                  <MonacoEditor
-                    height="100%"
-                    defaultLanguage={currentQuestion.type === 'CODING' ? 'javascript' : 'plaintext'}
-                    theme="vs-dark"
-                    value={code}
-                    onChange={handleEditorChange}
-                    onMount={handleEditorDidMount}
-                    options={{
-                      minimap: { enabled: false },
-                      scrollBeyondLastLine: true,
-                      fontSize: 14,
-                      wordWrap: 'on',
-                      automaticLayout: true,
-                      padding: { top: 16 },
-                      lineNumbers: 'on',
-                      renderWhitespace: 'selection',
-                      tabSize: 2,
-                      fontFamily: 'Fira Code, Menlo, Monaco, Consolas, monospace',
-                      renderLineHighlight: 'all',
-                      scrollbar: {
-                        vertical: 'auto',
-                        horizontal: 'auto',
-                      },
-                    }}
-                  />
-                </div>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
-                {currentQuestionIndex < questions.length - 1 ? (
-                  <button 
-                    onClick={handleNext}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors duration-150"
-                  >
-                    Next Question <span className="ml-1">→</span>
-                  </button>
-                ) : (
-                  <button 
-                    className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm transition-colors duration-150 flex items-center"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Submit Interview
-                  </button>
-                )}
-              </div>
-            </div>
+<div 
+  className="w-full lg:w-1/2 flex flex-col border-t lg:border-t-0 border-gray-100"
+  style={{ height: isFullscreen ? 'calc(90vh - 4rem)' : 'auto' }}
+>
+  {/* Top Bar */}
+  <div className="p-4 border-b border-gray-100 bg-gray-50">
+    <div className="flex items-center justify-between">
+      <h3 className="text-sm font-medium text-gray-700">Your Solution</h3>
+      <div className="flex items-center space-x-2">
+        <button className="text-xs px-2.5 py-1 rounded-md bg-white border border-gray-200 text-gray-600 hover:bg-gray-50">
+          Run Code (Ctrl+Enter)
+        </button>
+        <button className="text-gray-500 hover:text-gray-700">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {/* Editor */}
+  <div className="flex-1 relative overflow-hidden">
+    <div className="absolute inset-0">
+      <MonacoEditor
+        height="100%"
+        defaultLanguage={currentQuestion.type === 'CODING' ? 'javascript' : 'plaintext'}
+        theme="vs-dark"
+        value={code}
+        onChange={handleEditorChange}
+        onMount={handleEditorDidMount}
+        options={{
+          minimap: { enabled: false },
+          scrollBeyondLastLine: true,
+          fontSize: 14,
+          wordWrap: 'on',
+          automaticLayout: true,
+          padding: { top: 16 },
+          lineNumbers: 'on',
+          renderWhitespace: 'selection',
+          tabSize: 2,
+          fontFamily: 'Fira Code, Menlo, Monaco, Consolas, monospace',
+          renderLineHighlight: 'all',
+          scrollbar: { vertical: 'auto', horizontal: 'auto' },
+        }}
+      />
+    </div>
+  </div>
+
+  {/* Action Buttons pinned at bottom */}
+  <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end shrink-0">
+    {currentQuestionIndex < questions.length - 1 ? (
+      <button 
+        onClick={handleNext}
+        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors duration-150"
+      >
+        Next Question <span className="ml-1">→</span>
+      </button>
+    ) : (
+      <button 
+        className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm transition-colors duration-150 flex items-center"
+      >
+        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+        Submit Interview
+      </button>
+    )}
+  </div>
+</div>
+
           </div>
         </div>
       </div>
