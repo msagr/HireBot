@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// Define types for our data
 interface QuestionAnswer {
   id: string;
   question: string;
@@ -31,8 +30,8 @@ export async function GET(
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Get the question set with questions and answers in a single query
-    const questionSet = await db.questionSet.findUnique({
+    // Use findFirst instead of findUnique to filter by user email
+    const questionSet = await db.questionSet.findFirst({
       where: { 
         id: params.id,
         user: {
@@ -53,7 +52,7 @@ export async function GET(
                 answer: true,
                 code: true,
               },
-              take: 1 // Only get the most recent answer
+              take: 1
             }
           }
         }
@@ -64,7 +63,6 @@ export async function GET(
       return NextResponse.json({ error: "Question set not found" }, { status: 404 });
     }
 
-    // Format the response
     const report: ReportData = {
       id: questionSet.id,
       title: questionSet.title,
